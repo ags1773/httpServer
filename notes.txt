@@ -1,0 +1,19 @@
+
+- make post request to server with binary data (text file)
+- dump.txt will be created with post data
+- server is able to deal with multiple chunks of data
+- timeout has been tested for as low as 10 ms, still works! It has been set to 2 seconds for demo purpose
+
+-----------------------
+
+curl command to make POST request with binary data (file 'wireless-info.txt' in current dir):
+curl --request POST --data-binary "@wireless-info.txt" localhost:3000
+
+-------------------------------------------------------
+keepAlive:
+- http Agent is responsible for managing connection persistence and reuse of HTTP clients
+- it maintains a queue of pending requests for a given host and port, reusing the socket 
+  connection until the queue is empty
+- after this, the socket is either destroyed, or put in a pool where it's kept to be used again for requests
+  to the same host and port
+- whether it's destroyed or pooled depends on the 'keepAlive' option
