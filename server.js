@@ -1,6 +1,6 @@
 const net = require('net')
 // const Request = require('./request')
-const timeout = 1000 // timer after which server closes the socket
+const timeout = 10 // timer after which server closes the socket
 let timeoutId
 let contentLength
 
@@ -12,6 +12,7 @@ function start (port) {
     console.log('[server] Client connected' + socket.remoteAddress + ':' + socket.remotePort)
 
     socket.on('data', (chunk) => {
+      // console.log('chunk =>', chunk)
       body += chunk
       if (!gotData) {
         gotData = true
@@ -117,7 +118,7 @@ function parseContentLengthHeader (body) {
 }
 function getBodyLength (body) {
   const i = body.indexOf('\r\n\r\n')
-  return body.slice(i + 4).length
+  return Buffer.byteLength(body.slice(i + 4))
 }
 function normalizeHeaders (body) {
   let temp

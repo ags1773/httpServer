@@ -1,0 +1,17 @@
+BUGS:
+1) Content-length mismatch for .png files
+  - contentLength (header): 2,619,588, bodyLength: 4,583,816
+
+-------------------------------------------------------------------
+Solved Bugs:
+
+1) Body length mismatch with Content-Length header
+  - sending POST request with binary data (text file)
+  - data sent over multiple chunks
+  - doing body += chunk for each chunk
+  - conttent length header is slightly greater than calculated length of body (contentLength, bodyLength 391811 391783)
+
+Solution
+- use buffers to concatinate data chunks, not strings
+- "You need to set the content length using Buffer.byteLength not string.length."
+- https://github.com/expressjs/express/issues/1816
