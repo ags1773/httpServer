@@ -1,0 +1,29 @@
+BUGS:
+
+1) Body length mismatch with Content-Length header
+  - sending POST request with binary data (text file)
+  - data sent over multiple chunks
+  - doing body += chunk for each chunk
+  - conttent length header is slightly greater than calculated length of body (contentLength, bodyLength 391811 391783)
+
+-------------------------------------------------------------------------------
+
+WHEN should server close the socket connection?
+
+- server is supposed to return response after the client finishes sending all the data
+- Therefore, the server has to evaluate that it has received entire data by looking at the data itself according to specification of HTTP protocol
+
+HTTP-message = start-line
+*( header-field CRLF )
+CRLF
+[ message-body ]
+
+- server calculates the end of header-field with receiving double CRLF
+  CLRF appears at end of header, and again in the next empty line
+
+- check if it's a GET or POST request
+- if GET, do further processing and close the socket
+- if POST, check for content-length header
+- check if recieved data chunk has length equal to content-length. If yes, do further processing and close socket
+- if not, wait for some time for more data chunks
+- close connection
