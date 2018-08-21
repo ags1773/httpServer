@@ -14,7 +14,9 @@ function parseHttpRequest (reqObj, str) {
     const temp = h.split(': ')
     headers[temp[0]] = temp[1]
   })
-  body = parseBody(body)
+  if (startLine[0] === 'POST') {
+    body = parseBody(body)
+  }
 
   reqObj.method = startLine[0]
   reqObj.url = startLine[1]

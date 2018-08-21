@@ -1,5 +1,6 @@
 const net = require('net')
 const Request = require('./request')
+const Response = require('./response')
 const requestParser = require('./httpRequestParser')
 const timeout = 10 // timer after which server closes the socket
 let timeoutId
@@ -27,32 +28,32 @@ function start (port) {
           socket.end()
         } else if (httpMethod === 'POST') {
           console.log('POST request recieved')
-          // closeSocketWithError(socket, 405) // Don't allow POST requests for now
-          if (body.includes('Content-Length')) {
-            contentLength = Number(parseContentLengthHeader(body))
-            const bodyLength = getBodyLength(body)
-            if (contentLength !== bodyLength) {
-              // wait for some time to recieve more data
-              // end socket with error on timeout
-              console.log('contentLength, bodyLength', contentLength, bodyLength)
-              console.log('mismatch! waiting for more chunks...')
-              timeoutSet(() => closeSocketWithError(socket, 400))
-            } else {
-              createReqRes(body, socket)
-              socket.end()
-            }
-          } else closeSocketWithError(socket, 411)
+          closeSocketWithError(socket, 405) // Don't allow POST requests for now
+          // if (body.includes('Content-Length')) {
+          //   contentLength = Number(parseContentLengthHeader(body))
+          //   const bodyLength = getBodyLength(body)
+          //   if (contentLength !== bodyLength) {
+          //     // wait for some time to recieve more data
+          //     // end socket with error on timeout
+          //     console.log('contentLength, bodyLength', contentLength, bodyLength)
+          //     console.log('mismatch! waiting for more chunks...')
+          //     timeoutSet(() => closeSocketWithError(socket, 400))
+          //   } else {
+          //     createReqRes(body, socket)
+          //     socket.end()
+          //   }
+          // } else closeSocketWithError(socket, 411)
         } else closeSocketWithError(socket, 405, `"${httpMethod}" is an unsupported method`)
       } else {
         console.log('Chunk recieved')
-        timeoutreset(() => {
-          const bodyLength = getBodyLength(body)
-          console.log('contentLength, bodyLength', contentLength, bodyLength)
-          if (contentLength === bodyLength) {
-            createReqRes(body, socket)
-            socket.end()
-          } else closeSocketWithError(socket, 400)
-        })
+        // timeoutreset(() => {
+        //   const bodyLength = getBodyLength(body)
+        //   console.log('contentLength, bodyLength', contentLength, bodyLength)
+        //   if (contentLength === bodyLength) {
+        //     createReqRes(body, socket)
+        //     socket.end()
+        //   } else closeSocketWithError(socket, 400)
+        // })
       }
     })
 
@@ -75,17 +76,6 @@ function timeoutSet (callback) {
 function timeoutreset (callback) {
   clearTimeout(timeoutId)
   timeoutId = setTimeout(callback, timeout)
-}
-function createReqRes (body, socket) {
-  // generate req obj (add handlers)
-  // parse body, populate request obj
-  // generate response from request
-  // call handler functions one by one using next()
-
-  let request = new Request()
-  console.log('New Request =>', request)
-  request = requestParser(request, body)
-  console.log('request obj =>', request)
 }
 function closeSocketWithError (socket, statusCode, errorMsg = '') {
   const HTTPstatus = {
@@ -127,6 +117,27 @@ function normalizeHeaders (body) {
   temp = body.replace(/content-type/g, 'Content-Type')
   temp = body.replace(/content-length/g, 'Content-Length')
   return temp
+}
+
+function createReqRes (body, socket) {
+  // generate req obj (add handlers)
+  // parse body, populate request obj
+  // generate response from request
+  // call handler functions one by one using next()
+
+  let request = new Request()
+  request = requestParser(request, body)
+  request.socket = socket
+  const response = new Response(request)
+  console.log('Request =>', request)
+  console.log('Response =>', response)
+  console.log('Response Str =>')
+  console.log(response.getResponseStr())
+  next(request, response)
+}
+function next (req, res) { // executes all handler functions in the req.handlers array
+  const handler = req.handlers.shift()
+  handler(req, res, next)
 }
 
 module.exports = {
