@@ -1,7 +1,7 @@
 // const handlers = [getHandler, postHandler]
 
 class Request {
-  constructor (body) {
+  constructor () {
     this.method = ''
     this.url = ''
     this.version = ''

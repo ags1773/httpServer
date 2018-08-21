@@ -1,5 +1,6 @@
 const net = require('net')
-// const Request = require('./request')
+const Request = require('./request')
+const requestParser = require('./httpRequestParser')
 const timeout = 10 // timer after which server closes the socket
 let timeoutId
 let contentLength
@@ -21,12 +22,12 @@ function start (port) {
         if (!httpMethod) closeSocketWithError(socket, 400)
         if (httpMethod === 'GET') {
           writeOkResponse(socket)
-          console.log('GET request recieved')
           console.log(body)
           createReqRes(body, socket)
           socket.end()
         } else if (httpMethod === 'POST') {
           console.log('POST request recieved')
+          // closeSocketWithError(socket, 405) // Don't allow POST requests for now
           if (body.includes('Content-Length')) {
             contentLength = Number(parseContentLengthHeader(body))
             const bodyLength = getBodyLength(body)
@@ -81,9 +82,10 @@ function createReqRes (body, socket) {
   // generate response from request
   // call handler functions one by one using next()
 
-  console.log('create request response objects & proceed')
-  // const request = new Request(body)
-  // console.log(request)
+  let request = new Request()
+  console.log('New Request =>', request)
+  request = requestParser(request, body)
+  console.log('request obj =>', request)
 }
 function closeSocketWithError (socket, statusCode, errorMsg = '') {
   const HTTPstatus = {
