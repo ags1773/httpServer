@@ -1,4 +1,5 @@
 const net = require('net')
+const Request = require('./request')
 const timeout = 10 // timer after which server closes the socket
 let timeoutId
 
@@ -7,7 +8,7 @@ function start (port) {
   server.on('connection', (socket) => {
     let gotData = false
     let body = ''
-    console.log('Client connected' + socket.remoteAddress + ':' + socket.remotePort)
+    console.log('[server] Client connected' + socket.remoteAddress + ':' + socket.remotePort)
 
     socket.on('data', (chunk) => {
       body += chunk
@@ -25,25 +26,39 @@ function start (port) {
     })
 
     socket.on('end', () => {
-      console.log('FIN packet recieved')
-      console.log('Body => ', body.toString('utf-8'))
+      console.log('[server] FIN packet recieved')
+      console.log('Body => ', body.toString())
+      const httpMethod = body.slice(0, body.indexOf(' '))
+      if (!httpMethod || httpMethod !== 'GET') console.log('Bad http method')
+      else { // at this stage, allow only GET requests
+        createReqRes(body.toString(), socket)
+      }
+      body = ''
     })
-    socket.on('close', () => console.log('Socket connection closed by client'))
+    socket.on('close', () => console.log('[server] Socket connection closed by client'))
     socket.on('error', (err) => console.error(err))
   })
 
   server.listen(port)
   server.on('error', (err) => console.error(err))
-  server.on('listening', () => console.log(`Listening on port ${port}`))
+  server.on('listening', () => console.log(`[server] Listening on port ${port}`))
 }
 
 function timeoutSet (callback) {
   timeoutId = setTimeout(callback, timeout)
 }
-
 function timeoutreset (callback) {
   clearTimeout(timeoutId)
   timeoutId = setTimeout(callback, timeout)
+}
+function createReqRes (body, socket) {
+  // generate req obj (add handlers)
+  // parse body, populate request obj
+  // generate response from request
+  // call handler functions one by one using next()
+
+  const request = new Request(body)
+  console.log(request)
 }
 
 module.exports = {
