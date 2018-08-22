@@ -25,7 +25,7 @@ function start (port) {
           writeOkResponse(socket)
           console.log(body)
           createReqRes(body, socket)
-          socket.end()
+          // socket.end()
         } else if (httpMethod === 'POST') {
           console.log('POST request recieved')
           closeSocketWithError(socket, 405) // Don't allow POST requests for now
@@ -101,7 +101,8 @@ function writeOkResponse (socket) {
   socket.write('HTTP/1.1 200 OK\r\n')
   socket.write('Date: ' + (new Date()).toString() + '\r\n')
   socket.write('Connection: close\r\n')
-  socket.write('Content-Type: text/plain\r\n')
+  // socket.write('Content-Type: text/plain\r\n')
+  socket.write('Content-Type: text/html\r\n')
   socket.write('\r\n')
 }
 function parseContentLengthHeader (body) {
@@ -113,29 +114,26 @@ function getBodyLength (body) {
   return Buffer.byteLength(body.slice(i + 4))
 }
 function normalizeHeaders (body) {
-  let temp
-  temp = body.replace(/content-type/g, 'Content-Type')
-  temp = body.replace(/content-length/g, 'Content-Length')
-  return temp
+  return body
+    .replace(/content-length/g, 'Content-Length')
+    .replace(/content-type/g, 'Content-Type')
 }
 
 function createReqRes (body, socket) {
-  // generate req obj (add handlers)
-  // parse body, populate request obj
-  // generate response from request
-  // call handler functions one by one using next()
-
   let request = new Request()
   request = requestParser(request, body)
   request.socket = socket
   const response = new Response(request)
-  console.log('Request =>', request)
+
+  // console.log('Request =>', request)
   console.log('Response =>', response)
   console.log('Response Str =>')
   console.log(response.getResponseStr())
   next(request, response)
 }
-function next (req, res) { // executes all handler functions in the req.handlers array
+// // Handlers are nothing but an array of functions that actually 'do' what the request is asking
+// // At this point, there is only one function 'getHandler', that writes contents on index.js to the socket
+function next (req, res) {
   const handler = req.handlers.shift()
   handler(req, res, next)
 }
