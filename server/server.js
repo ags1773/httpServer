@@ -153,7 +153,7 @@ function getHandler (req, res, next) {
   } else {
     console.log(`${req.url} route isn't defined`)
     res.setStatus(404)
-    res.writeToSocketAndEnd()
+    res.send()
   }
 }
 
