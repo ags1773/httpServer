@@ -1,29 +1,36 @@
-require 'server':
+# Creating & running server
+require 'server'
+```sh
 const server = require('server')
-
----------Server-----------
-Start server:
 server.start(port)
+```
 
-Listening for requests on a route:
+## SERVER
+### Listening for requests on a route:
+```sh
 server.addRoute(method, path, callback)
-  method: GET
-  callback: 'request' and 'response' objects are available as params to callback function
-  example: server.addRoute('GET', '/', (request, response) => {
-    response.render('index.html')
-  })
+```
+method: GET / POST
+path: The URL path
+callback: Function executed after client hits the route
+- #### Example
+    ```sh
+    server.addRoute('GET', '/', (request, response) => {
+        response.render('index.html')
+    })
+    ```
 
----------RESPONSE methods------------
-=> render('abc.html'):
-  renders file "views/abc.html"
-  './views' is the default directory. All your html files should be here for res.render to work
-
-=> json(data):
-  converts 'data' to JSON and puts it in res.body
-  NOTE: res.send() is needed to write the data to the socket
-  example:
-  res.json("lorem ipsum")
-  res.send()
-
-=> setStatus(statusCode):
-  sets res.statusCode and the appropriate res.statusMessage to the response object
+## RESPONSE Methods
+- ### response.render('index.html')
+    - renders file "views/index.html"
+    - './views' is the default directory. All your html files should be here for         res.render to work
+- ### response.json(data)
+    - converts 'data' to JSON and puts it in res.body
+    - NOTE: res.send() is needed to write the data to the socket
+    - #### Example
+    ```sh
+        res.json("lorem ipsum")
+        res.send()
+    ```
+- ### response.setStatus(statusCode)
+    - sets res.statusCode and the appropriate res.statusMessage to the response object
