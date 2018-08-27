@@ -2,6 +2,10 @@ BUGS:
 1) Content-length mismatch for .png files
   - contentLength (header): 2,619,588, bodyLength: 4,583,816
 
+2) res.render('test.html')
+   res.render('/jjjj')
+  throws error saying write after socket close. It should give a correct error
+
 -------------------------------------------------------------------
 Solved Bugs:
 

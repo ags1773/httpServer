@@ -48,7 +48,7 @@ class Response {
           })
         }
       }
-      this.socket.end() // ends socket if no body or if error
+      this.socket.end()
     })
   }
   render (htmlFile) {
@@ -64,7 +64,6 @@ class Response {
         const buf = Buffer.from('\r\n')
         this.body = Buffer.concat([data, buf])
         this.setContentType('html')
-        console.log('BODY inside render>>>', this.body)
       }
       this.send()
     })
@@ -72,11 +71,24 @@ class Response {
   json (body) {
     try {
       this.body = JSON.stringify(body)
+      this.body += '\r\n'
       this.setContentType('json')
     } catch (err) {
       this.setStatus(500)
       console.error(err)
     }
+  }
+  write (str) {
+    // similar to res.send() in express
+    if (typeof (str) !== 'string') {
+      this.setStatus(500)
+      console.error(`[server] ${str} needs to be a string`)
+    } else {
+      this.body += str
+      this.body += '\r\n'
+      if (this.headers['Content-Type'] === undefined) this.setContentType('text')
+    }
+    return this
   }
 }
 

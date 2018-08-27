@@ -56,7 +56,8 @@ const status = {
 }
 
 const mimeTypes = {
-  'html': 'text/html',
+  'html': 'text/html; charset=utf-8',
+  'text': 'text/plain; charset=utf-8',
   'css': 'text/css',
   'js': 'text/javascript',
   'json': 'application/json',
