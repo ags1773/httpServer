@@ -16,20 +16,24 @@ function parseReqHeaders (reqObj, headerStr) {
 }
 
 function parseReqBody (headers, body) {
-  if ('Content-Type' in headers) {
-    if (headers['Content-Type'] === 'application/json') {
-      console.log('JSON recieved')
-      return JSON.parse(body)
-    } else if (headers['Content-Type'] === 'application/x-www-form-urlencoded') {
-      console.log('URL encoded form data recieved')
-      return querystring.parse(body)
+  try {
+    if ('Content-Type' in headers) {
+      if (headers['Content-Type'] === 'application/json') {
+        console.log('JSON recieved')
+        return JSON.parse(body)
+      } else if (headers['Content-Type'] === 'application/x-www-form-urlencoded') {
+        console.log('URL encoded form data recieved')
+        return querystring.parse(body)
+      } else {
+        console.log('Content-Type =>', headers['Content-Type'])
+        return body
+      }
     } else {
-      console.log('Content-Type =>', headers['Content-Type'])
+      console.log(`"Content-Type" header not present`)
       return body
     }
-  } else {
-    console.log(`"Content-Type" header not present`)
-    return body
+  } catch (err) {
+    console.log(err)
   }
 }
 

@@ -1,5 +1,5 @@
 BUGS:
-1) On restarting server, the first request times out
+1) On sending invalid JSON, currently just logging error to console, and response of 200 OK sent by default. Fix this
 
 -------------------------------------------------------------------
 Solved Bugs:
@@ -23,3 +23,7 @@ Solution
   throws error saying write after socket close. It should give a correct error
   
   - Not a bug, express does the same thing 
+
+4) On restarting server, the first request times out:
+  - it was because methodHandler wasn't being added. Fixed this (not very elegantly)
+  

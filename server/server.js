@@ -3,7 +3,6 @@ const Request = require('./request')
 const Response = require('./response')
 const {parseReqHeaders, parseReqBody} = require('./httpRequestParser')
 const timeout = 5000 // timer after which server closes the socket
-let gotHeaders = false // boolean representing if request line and all headers have been recieved
 
 const handlers = []
 const routes = {
@@ -15,14 +14,18 @@ function createServer (port) {
   const server = net.createServer()
   server.on('connection', (socket) => {
     console.log('[server] Client connected' + socket.remoteAddress + ':' + socket.remotePort)
+    let gotHeaders = false // boolean representing if request line and all headers have been recieved
     let bodyBuf = Buffer.from([])
     let headerBuf = Buffer.from([])
+    // addHandler(methodHandler)
     let request = new Request(handlers)
+    // console.log('Request =>', request)
     let headersParsed = false
     socket.on('data', chunk => {
       if (gotHeaders) bodyBuf = Buffer.concat([bodyBuf, chunk], bodyBuf.length + chunk.length)
       else {
-        let [headerChunk, bodychunk] = getHeaderAndBodyChunks(chunk)
+        let [headerChunk, bodychunk, flag] = getHeaderAndBodyChunks(chunk)
+        gotHeaders = flag
         headerBuf = Buffer.concat([headerBuf, headerChunk], headerBuf.length + headerChunk.length)
         if (bodychunk) {
           bodyBuf = Buffer.concat([bodyBuf, bodychunk], bodyBuf.length + bodychunk.length)
@@ -56,6 +59,8 @@ function createServer (port) {
       headerBuf = Buffer.from([])
       bodyBuf = Buffer.from([])
       gotHeaders = false
+      handlers.splice(0, handlers.length)
+      console.log(`$$$$ Handlers after clearing => ${handlers}`)
     })
     socket.on('close', () => console.log('[server] Socket connection closed by client ------------'))
     socket.on('error', (err) => console.error(err))
@@ -66,16 +71,16 @@ function createServer (port) {
   server.on('listening', () => console.log(`[server] Listening on port ${port}`))
 }
 function getHeaderAndBodyChunks (chunk) {
-  let header
-  let body
+  let header, body
+  let flag = false // replicates gotHeaders
   if (chunk.includes('\r\n\r\n')) {
-    gotHeaders = true
+    flag = true
     header = chunk.slice(0, chunk.indexOf('\r\n\r\n'))
     body = chunk.slice(chunk.indexOf('\r\n\r\n') + 4)
   } else {
     header = chunk // if headers themselves are recieved over multiple chunks
   }
-  return [header, body]
+  return [header, body, flag]
 }
 function normalizeHeaders (body) {
   return body
@@ -102,20 +107,23 @@ function closeSocketWithError (socket, statusCode, errorMsg = '') {
 }
 function doStuff (request) {
   console.log('@@@ DO STUFF @@@')
+  // addHandler(methodHandler)
+  request.handlers.push(methodHandler)
   const response = new Response(request)
-  addHandler(methodHandler)
+  console.log('Handlers >>', request.handlers.length)
   next(request, response)
 }
 function next (req, res) {
   const handler = req.handlers.shift()
+  console.log('New handlers length >>', req.handlers.length)
   if (handler) handler(req, res)
 }
 function addRoute (method, url, callback) {
   routes[method][url] = callback
 }
-function addHandler (h) {
-  handlers.push(h)
-}
+// function addHandler (h) {
+//   handlers.push(h)
+// }
 function methodHandler (req, res) {
   if (routes[req.method].hasOwnProperty(req.url)) {
     console.log('%%% Running method handler %%%')
