@@ -21,9 +21,11 @@ class Response {
   setStatus (code) {
     this.statusCode = code
     this.statusMessage = httpStatusCodes[code]
+    return this
   }
   setContentType (c) {
     this.headers['Content-Type'] = mimeTypes[c]
+    return this
   }
   getResponseStr () {
     let str = ''
@@ -77,6 +79,7 @@ class Response {
       this.setStatus(500)
       console.error(err)
     }
+    return this
   }
   write (str) {
     // similar to res.send() in express

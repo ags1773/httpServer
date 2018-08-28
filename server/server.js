@@ -2,7 +2,7 @@ const net = require('net')
 const Request = require('./request')
 const Response = require('./response')
 const {parseReqHeaders, parseReqBody} = require('./httpRequestParser')
-const timeout = 2000 // timer after which server closes the socket
+const timeout = 10000 // timer after which server closes the socket
 let gotHeaders = false // boolean representing if request line and all headers have been recieved
 
 const handlers = []
@@ -44,13 +44,13 @@ function createServer (port) {
         const response = new Response(request)
         if (request.method === 'GET' || request.method === 'POST') {
           console.log('GET or POST request recieved')
-          if (request.method === 'POST') request.body = parseReqBody(request.headers, bodyBuf.toString())
+          if (request.method === 'POST') {
+            if (request.headers['Content-Length'] === undefined) response.setStatus(411).send()
+            request.body = parseReqBody(request.headers, bodyBuf.toString())
+          }
           addHandler(methodHandler)
           next(request, response)
-        } else {
-          response.setStatus(405)
-          response.send()
-        }
+        } else response.setStatus(405).send()
       } else console.log(`REJEKTED! 'Content-Length': ${request.headers['Content-Length']}, Buffer length: ${bodyBuf.length}`)
     })
 

@@ -9,15 +9,13 @@ server.addRoute('GET', '/test', (req, res) => {
   res.render('/jjjj')
 })
 server.addRoute('GET', '/json', (req, res) => {
-  res.setStatus(418)
-  res.json([1, 2, 3, 4, 5])
+  res.setStatus(418).json([1, 2, 3, 4, 5]).send()
+  // res.json([1, 2, 3, 4, 5]).send()
   // res.json()
-  res.send()
 })
 server.addRoute('POST', '/post', (req, res) => {
   console.log('body >>>', req.body)
-  res.setStatus(200)
-  res.send()
+  res.setStatus(200).send()
 })
 server.addRoute('GET', '/12', (req, res) => {
   res.setContentType('jpg')
@@ -33,7 +31,5 @@ server.addRoute('GET', '/write', (req, res) => {
   res.write('Bacon ipsum dolor amet ').send()
 })
 server.addRoute('GET', '/write/html', (req, res) => {
-  res.write('<h2>FUA</h2>')
-  res.setContentType('html')
-  res.send()
+  res.write('<h2>FUA</h2>').setContentType('html').send()
 })
