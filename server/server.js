@@ -2,7 +2,7 @@ const net = require('net')
 const Request = require('./request')
 const Response = require('./response')
 const {parseReqHeaders, parseReqBody} = require('./httpRequestParser')
-const timeout = 10000 // timer after which server closes the socket
+const timeout = 5000 // timer after which server closes the socket
 let gotHeaders = false // boolean representing if request line and all headers have been recieved
 
 const handlers = []
@@ -28,37 +28,29 @@ function createServer (port) {
           bodyBuf = Buffer.concat([bodyBuf, bodychunk], bodyBuf.length + bodychunk.length)
         }
       }
-      if (!headersParsed) {
+      if (gotHeaders && !headersParsed) {
+        console.log('### PARSING HEADERS ###')
         headersParsed = true
         let str = normalizeHeaders(headerBuf.toString())
         parseReqHeaders(request, str)
         request.socket = socket
       }
-      if (headersParsed &&
-        (
-          Number(request.headers['Content-Length']) === bodyBuf.length ||
-          request.headers['Content-Length'] === undefined
-        )
-      ) {
-        console.log(`Processing Request... 'Content-Length': ${request.headers['Content-Length']}, Buffer length: ${bodyBuf.length}`)
-        const response = new Response(request)
-        if (request.method === 'GET' || request.method === 'POST') {
-          console.log('GET or POST request recieved')
-          if (request.method === 'POST') {
-            if (request.headers['Content-Length'] === undefined) response.setStatus(411).send()
-            request.body = parseReqBody(request.headers, bodyBuf.toString())
-          }
-          addHandler(methodHandler)
-          next(request, response)
-        } else response.setStatus(405).send()
-      } else console.log(`REJEKTED! 'Content-Length': ${request.headers['Content-Length']}, Buffer length: ${bodyBuf.length}`)
+      if (headersParsed) {
+        const contentLengthHeader = Number(request.headers['Content-Length'])
+        if (request.method !== 'GET' && request.method !== 'POST') closeSocketWithError(socket, 405)
+        else if (request.method === 'POST' && request.headers['Content-Length'] === 'undefined') closeSocketWithError(socket, 411)
+        else if (request.method === 'POST' && contentLengthHeader < bodyBuf.length) closeSocketWithError(socket, 400)
+        else if (contentLengthHeader > bodyBuf.length) console.log(`[server] Waiting for more data chunks...`)
+        else if (request.method === 'POST' && contentLengthHeader === bodyBuf.length) {
+          request.body = parseReqBody(request.headers, bodyBuf.toString())
+          doStuff(request)
+        } else if (request.method === 'GET') doStuff(request)
+        else closeSocketWithError(socket, 500, 'Error! something slipped through the cracks...')
+      }
     })
 
     socket.setTimeout(timeout) // will trigger 'timeout' event after 'timeout' milliseconds of idling
-    socket.on('timeout', () => {
-      console.log('[server] Connection timed out')
-      socket.end()
-    })
+    socket.on('timeout', () => closeSocketWithError(socket, 408))
     socket.on('end', () => {
       console.log('[server] FIN packet recieved')
       headerBuf = Buffer.from([])
@@ -89,6 +81,30 @@ function normalizeHeaders (body) {
   return body
     .replace(/content-length/g, 'Content-Length')
     .replace(/content-type/g, 'Content-Type')
+}
+function closeSocketWithError (socket, statusCode, errorMsg = '') {
+  const HTTPstatus = {
+    400: 'Bad Request',
+    405: 'Method Not Allowed',
+    408: 'Request Timeout',
+    411: 'Length Required',
+    500: 'Internal Server Error'
+  }
+  console.error(`[server] ${statusCode} - ${HTTPstatus[statusCode]} ${errorMsg}`)
+  socket.write(`HTTP/1.1 ${statusCode} ${HTTPstatus[statusCode]}\r\n`)
+  socket.write('Date: ' + (new Date()).toString() + '\r\n')
+  socket.write('Connection: close\r\n')
+  socket.write('\r\n')
+  if (errorMsg) {
+    socket.write(errorMsg + '\r\n')
+  }
+  socket.end()
+}
+function doStuff (request) {
+  console.log('@@@ DO STUFF @@@')
+  const response = new Response(request)
+  addHandler(methodHandler)
+  next(request, response)
 }
 function next (req, res) {
   const handler = req.handlers.shift()
