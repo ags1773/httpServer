@@ -14,6 +14,11 @@ server.addRoute('GET', '/json', (req, res) => {
   // res.json()
   res.send()
 })
+server.addRoute('POST', '/post', (req, res) => {
+  console.log('body >>>', req.body)
+  res.setStatus(200)
+  res.send()
+})
 server.addRoute('GET', '/12', (req, res) => {
   res.setContentType('jpg')
   res.setStatus(305)

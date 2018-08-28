@@ -1,5 +1,7 @@
 BUGS:
-
+1) POST request:
+  - doesn't execute handler the 1st time after starting server
+  - works second time onward
 
 -------------------------------------------------------------------
 Solved Bugs:

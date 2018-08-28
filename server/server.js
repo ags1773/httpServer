@@ -102,6 +102,7 @@ function addHandler (h) {
 }
 function methodHandler (req, res) {
   if (routes[req.method].hasOwnProperty(req.url)) {
+    console.log('%%% Running method handler %%%')
     routes[req.method][req.url](req, res)
   } else {
     console.log(`[server] ${req.method} on "${req.url}" route isn't defined`)

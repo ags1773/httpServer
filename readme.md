@@ -2,7 +2,7 @@
 require 'server'
 ```sh
 const server = require('server')
-server.start(port)
+server.createServer(port)
 ```
 
 ## SERVER
@@ -17,6 +17,13 @@ callback: Function executed after client hits the route
     ```sh
     server.addRoute('GET', '/', (request, response) => {
         response.render('index.html')
+    })
+    ```
+    ```sh
+    server.addRoute('POST', '/post', (req, res) => {
+        console.log('body >>>', req.body)
+        res.setStatus(200)
+        res.send()
     })
     ```
 
