@@ -1,10 +1,5 @@
 BUGS:
-1) Content-length mismatch for .png files
-  - contentLength (header): 2,619,588, bodyLength: 4,583,816
 
-2) res.render('test.html')
-   res.render('/jjjj')
-  throws error saying write after socket close. It should give a correct error
 
 -------------------------------------------------------------------
 Solved Bugs:
@@ -19,3 +14,12 @@ Solution
 - use buffers to concatinate data chunks, not strings
 - "You need to set the content length using Buffer.byteLength not string.length."
 - https://github.com/expressjs/express/issues/1816
+
+2) Content-length mismatch for .png files
+  - solved after using buffers
+
+3) res.render('test.html')
+  res.render('/jjjj')
+  throws error saying write after socket close. It should give a correct error
+  
+  - Not a bug, express does the same thing 

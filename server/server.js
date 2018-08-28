@@ -1,9 +1,8 @@
 const net = require('net')
 const Request = require('./request')
 const Response = require('./response')
-const {parseHeaders} = require('./httpRequestParser')
+const {parseReqHeaders, parseReqBody} = require('./httpRequestParser')
 const timeout = 2000 // timer after which server closes the socket
-// let contentLength
 let gotHeaders = false // boolean representing if request line and all headers have been recieved
 
 const handlers = []
@@ -18,7 +17,7 @@ function createServer (port) {
     console.log('[server] Client connected' + socket.remoteAddress + ':' + socket.remotePort)
     let bodyBuf = Buffer.from([])
     let headerBuf = Buffer.from([])
-    let req = new Request(handlers)
+    let request = new Request(handlers)
     let headersParsed = false
     socket.on('data', chunk => {
       if (gotHeaders) bodyBuf = Buffer.concat([bodyBuf, chunk], bodyBuf.length + chunk.length)
@@ -32,23 +31,27 @@ function createServer (port) {
       if (!headersParsed) {
         headersParsed = true
         let str = normalizeHeaders(headerBuf.toString())
-        parseHeaders(req, str)
-        req.socket = socket
+        parseReqHeaders(request, str)
+        request.socket = socket
       }
       if (headersParsed &&
         (
-          Number(req.headers['Content-Length']) === bodyBuf.length ||
-          req.headers['Content-Length'] === undefined
+          Number(request.headers['Content-Length']) === bodyBuf.length ||
+          request.headers['Content-Length'] === undefined
         )
       ) {
-        if (req.method === 'GET') {
-          console.log('GET Request')
+        console.log(`Processing Request... 'Content-Length': ${request.headers['Content-Length']}, Buffer length: ${bodyBuf.length}`)
+        const response = new Response(request)
+        if (request.method === 'GET' || request.method === 'POST') {
+          console.log('GET or POST request recieved')
+          if (request.method === 'POST') request.body = parseReqBody(request.headers, bodyBuf.toString())
           addHandler(methodHandler)
-          createResponseObj(req)
-        } else if (req.method === 'POST') {
-          console.log('POST Request')
-        } else closeSocketWithError(socket, 405) // unsupported method
-      } else console.log(`REJEKTED! 'Content-Length': ${req.headers['Content-Length']}, Buffer length: ${bodyBuf.length}`)
+          next(request, response)
+        } else {
+          response.setStatus(405)
+          response.send()
+        }
+      } else console.log(`REJEKTED! 'Content-Length': ${request.headers['Content-Length']}, Buffer length: ${bodyBuf.length}`)
     })
 
     socket.setTimeout(timeout) // will trigger 'timeout' event after 'timeout' milliseconds of idling
@@ -62,7 +65,7 @@ function createServer (port) {
       bodyBuf = Buffer.from([])
       gotHeaders = false
     })
-    socket.on('close', () => console.log('[server] Socket connection closed by client'))
+    socket.on('close', () => console.log('[server] Socket connection closed by client ------------'))
     socket.on('error', (err) => console.error(err))
   })
 
@@ -82,33 +85,10 @@ function getHeaderAndBodyChunks (chunk) {
   }
   return [header, body]
 }
-function closeSocketWithError (socket, statusCode, errorMsg = '') {
-  const HTTPstatus = {
-    400: 'Bad Request',
-    405: 'Method Not Allowed',
-    408: 'Request Timeout',
-    411: 'Length Required'
-  }
-
-  console.error(`[server] ${statusCode} - ${HTTPstatus[statusCode]} - ${errorMsg}`)
-  socket.write(`HTTP/1.1 ${statusCode} ${HTTPstatus[statusCode]}\r\n`)
-  socket.write('Date: ' + (new Date()).toString() + '\r\n')
-  socket.write('Connection: close\r\n')
-  socket.write('Content-Type: text/plain; charset=utf-8\r\n')
-  socket.write('\r\n')
-  if (errorMsg) {
-    socket.write(errorMsg + '\r\n')
-  }
-  socket.end()
-}
 function normalizeHeaders (body) {
   return body
     .replace(/content-length/g, 'Content-Length')
     .replace(/content-type/g, 'Content-Type')
-}
-function createResponseObj (request) {
-  const response = new Response(request)
-  next(request, response)
 }
 function next (req, res) {
   const handler = req.handlers.shift()
@@ -124,7 +104,7 @@ function methodHandler (req, res) {
   if (routes[req.method].hasOwnProperty(req.url)) {
     routes[req.method][req.url](req, res)
   } else {
-    console.log(`[server] "${req.url}" route isn't defined`)
+    console.log(`[server] ${req.method} on "${req.url}" route isn't defined`)
     res.setStatus(404)
     res.send()
   }

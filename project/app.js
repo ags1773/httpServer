@@ -5,8 +5,8 @@ server.addRoute('GET', '/', (req, res) => {
   res.render('home.html')
 })
 server.addRoute('GET', '/test', (req, res) => {
-  res.render('test.html')
-  // res.render('/jjjj')
+  // res.render('test.html')
+  res.render('/jjjj')
 })
 server.addRoute('GET', '/json', (req, res) => {
   res.setStatus(418)

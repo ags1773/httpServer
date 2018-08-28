@@ -13,7 +13,7 @@ class Response {
     this.socket = request.socket
     this.headers = {
       Date: (new Date()).toString(),
-      Connection: request.headers['Connection'] || 'keep-alive'
+      Connection: 'close'
     }
     this.body = ''
   }
