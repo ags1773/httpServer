@@ -1,5 +1,10 @@
 const server = require('../server/server')
 
+server.addHandler((req, res, next) => {
+  console.log('>>>> TEST HANDLER 123 <<<<')
+  next(req, res)
+})
+
 server.createServer(3000)
 server.addRoute('GET', '/', (req, res) => {
   res.render('home.html')

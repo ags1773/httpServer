@@ -18,7 +18,7 @@ function createServer (port) {
     let bodyBuf = Buffer.from([])
     let headerBuf = Buffer.from([])
     addHandler(methodHandler)
-    addHandler(testHandler)
+    // addHandler(testHandler)
     let request = new Request(handlers)
     // console.log('Request =>', request)
     let headersParsed = false
@@ -112,10 +112,8 @@ function doStuff (request) {
   next(request, response)
 }
 function next (req, res) {
-  console.log('Handlers length >>', req.handlers.length)
   const handler = req.handlers.shift()
-  console.log('New handlers length >>', req.handlers.length)
-  if (handler) handler(req, res)
+  if (handler) handler(req, res, next)
   else console.log('No more handlers to run...')
 }
 function addRoute (method, url, callback) {
@@ -124,9 +122,9 @@ function addRoute (method, url, callback) {
 function addHandler (h) {
   handlers.push(h)
 }
-function methodHandler (req, res) {
+function methodHandler (req, res, next) {
+  console.log('%%% Running method handler %%%')
   if (routes[req.method].hasOwnProperty(req.url)) {
-    console.log('%%% Running method handler %%%')
     routes[req.method][req.url](req, res)
     next(req, res)
   } else {
@@ -135,12 +133,13 @@ function methodHandler (req, res) {
     res.send()
   }
 }
-function testHandler (req, res) {
-  console.log('>>>> TEST HANDLER <<<<')
-  next(req, res)
-}
+// function testHandler (req, res) {
+//   console.log('>>>> TEST HANDLER <<<<')
+//   next(req, res)
+// }
 
 module.exports = {
   createServer,
-  addRoute
+  addRoute,
+  addHandler
 }
