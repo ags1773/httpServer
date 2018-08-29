@@ -3,6 +3,7 @@ const Request = require('./request')
 const Response = require('./response')
 const {parseReqHeaders, parseReqBody} = require('./httpRequestParser')
 const timeout = 5000 // timer after which server closes the socket
+const defaultHandlers = [methodHandler] // these handlers are attached for every request & are executed L to R
 
 const handlers = []
 const routes = {
@@ -17,7 +18,7 @@ function createServer (port) {
     let gotHeaders = false // boolean representing if request line and all headers have been recieved
     let bodyBuf = Buffer.from([])
     let headerBuf = Buffer.from([])
-    let request = new Request(handlers.concat([methodHandler]))
+    let request = new Request(handlers.concat(defaultHandlers))
     // console.log('Request =>', request)
     let headersParsed = false
     socket.on('data', chunk => {
@@ -44,8 +45,12 @@ function createServer (port) {
         else if (request.method === 'POST' && contentLengthHeader < bodyBuf.length) closeSocketWithError(socket, 400)
         else if (contentLengthHeader > bodyBuf.length) console.log(`[server] Waiting for more data chunks...`)
         else if (request.method === 'POST' && contentLengthHeader === bodyBuf.length) {
-          request.body = parseReqBody(request.headers, bodyBuf.toString())
-          doStuff(request)
+          let [parsedBody, error] = parseReqBody(request.headers, bodyBuf.toString())
+          if (error) closeSocketWithError(socket, 400, error.message)
+          else {
+            request.body = parsedBody
+            doStuff(request)
+          }
         } else if (request.method === 'GET') doStuff(request)
         else closeSocketWithError(socket, 500, 'Error! something slipped through the cracks...')
       }

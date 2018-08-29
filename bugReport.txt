@@ -1,5 +1,5 @@
 BUGS:
-1) On sending invalid JSON, currently just logging error to console, and response of 200 OK sent by default. Fix this
+
 
 -------------------------------------------------------------------
 Solved Bugs:
@@ -26,4 +26,6 @@ Solution
 
 4) On restarting server, the first request times out:
   - it was because methodHandler wasn't being added. Fixed this
-  
+
+5) On sending invalid JSON, currently just logging error to console, and response of 200 OK sent by default
+  - setting response code 400 and returning error message on encountering error in body parser
