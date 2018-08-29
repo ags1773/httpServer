@@ -17,9 +17,7 @@ function createServer (port) {
     let gotHeaders = false // boolean representing if request line and all headers have been recieved
     let bodyBuf = Buffer.from([])
     let headerBuf = Buffer.from([])
-    addHandler(methodHandler)
-    // addHandler(testHandler)
-    let request = new Request(handlers)
+    let request = new Request(handlers.concat([methodHandler]))
     // console.log('Request =>', request)
     let headersParsed = false
     socket.on('data', chunk => {
@@ -33,7 +31,6 @@ function createServer (port) {
         }
       }
       if (gotHeaders && !headersParsed) {
-        console.log('### PARSING HEADERS ###')
         headersParsed = true
         let str = normalizeHeaders(headerBuf.toString())
         parseReqHeaders(request, str)
@@ -133,10 +130,6 @@ function methodHandler (req, res, next) {
     res.send()
   }
 }
-// function testHandler (req, res) {
-//   console.log('>>>> TEST HANDLER <<<<')
-//   next(req, res)
-// }
 
 module.exports = {
   createServer,
