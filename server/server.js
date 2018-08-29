@@ -17,7 +17,8 @@ function createServer (port) {
     let gotHeaders = false // boolean representing if request line and all headers have been recieved
     let bodyBuf = Buffer.from([])
     let headerBuf = Buffer.from([])
-    // addHandler(methodHandler)
+    addHandler(methodHandler)
+    addHandler(testHandler)
     let request = new Request(handlers)
     // console.log('Request =>', request)
     let headersParsed = false
@@ -36,6 +37,7 @@ function createServer (port) {
         headersParsed = true
         let str = normalizeHeaders(headerBuf.toString())
         parseReqHeaders(request, str)
+        console.log('Request ==>', request)
         request.socket = socket
       }
       if (headersParsed) {
@@ -59,8 +61,6 @@ function createServer (port) {
       headerBuf = Buffer.from([])
       bodyBuf = Buffer.from([])
       gotHeaders = false
-      handlers.splice(0, handlers.length)
-      console.log(`$$$$ Handlers after clearing => ${handlers}`)
     })
     socket.on('close', () => console.log('[server] Socket connection closed by client ------------'))
     socket.on('error', (err) => console.error(err))
@@ -107,32 +107,37 @@ function closeSocketWithError (socket, statusCode, errorMsg = '') {
 }
 function doStuff (request) {
   console.log('@@@ DO STUFF @@@')
-  // addHandler(methodHandler)
-  request.handlers.push(methodHandler)
   const response = new Response(request)
-  console.log('Handlers >>', request.handlers.length)
+  console.log('Handlers >>', request.handlers)
   next(request, response)
 }
 function next (req, res) {
+  console.log('Handlers length >>', req.handlers.length)
   const handler = req.handlers.shift()
   console.log('New handlers length >>', req.handlers.length)
   if (handler) handler(req, res)
+  else console.log('No more handlers to run...')
 }
 function addRoute (method, url, callback) {
   routes[method][url] = callback
 }
-// function addHandler (h) {
-//   handlers.push(h)
-// }
+function addHandler (h) {
+  handlers.push(h)
+}
 function methodHandler (req, res) {
   if (routes[req.method].hasOwnProperty(req.url)) {
     console.log('%%% Running method handler %%%')
     routes[req.method][req.url](req, res)
+    next(req, res)
   } else {
     console.log(`[server] ${req.method} on "${req.url}" route isn't defined`)
     res.setStatus(404)
     res.send()
   }
+}
+function testHandler (req, res) {
+  console.log('>>>> TEST HANDLER <<<<')
+  next(req, res)
 }
 
 module.exports = {

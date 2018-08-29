@@ -25,5 +25,5 @@ Solution
   - Not a bug, express does the same thing 
 
 4) On restarting server, the first request times out:
-  - it was because methodHandler wasn't being added. Fixed this (not very elegantly)
+  - it was because methodHandler wasn't being added. Fixed this
   
