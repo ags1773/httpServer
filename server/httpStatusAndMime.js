@@ -58,8 +58,8 @@ const status = {
 const mimeTypes = {
   'html': 'text/html; charset=utf-8',
   'text': 'text/plain; charset=utf-8',
-  'css': 'text/css',
-  'js': 'text/javascript',
+  'css': 'text/css; charset=utf-8',
+  'js': 'text/javascript; charset=utf-8',
   'json': 'application/json',
   'png': 'image/png',
   'jpg': 'image/jpeg'

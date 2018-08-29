@@ -1,4 +1,10 @@
 const server = require('../server/server')
+const {staticFileHandler} = require('../server/handlers')
+const path = require('path')
+
+server.addHandler((req, res, next) => {
+  staticFileHandler(req, res, next, path.join(__dirname, 'public'))
+})
 
 server.addHandler((req, res, next) => {
   console.log('>>>> TEST HANDLER 123 <<<<')

@@ -1,6 +1,5 @@
 BUGS:
 
-
 -------------------------------------------------------------------
 Solved Bugs:
 
@@ -29,3 +28,18 @@ Solution
 
 5) On sending invalid JSON, currently just logging error to console, and response of 200 OK sent by default
   - setting response code 400 and returning error message on encountering error in body parser
+
+6) GET requests through CHROME triggering 'timeout' & giving 'Error: write after end'
+  - GET request for localhost:3000
+  - page getting rendered
+  - all handlers running fine
+  - socket closes 
+  - after that, getting [server] 408 - Request Timeout
+  - after some time, getting Error: write after end
+  - not happening for CURL/Postman/Firefox
+
+Explaination: 
+  - Chrome starts multiple connections for a single request to speed things up and other weird reasons
+  - ignoring this issue
+  - removig the 'socket.write' lines in program 'closeSocketWithError' will prevent 'Error: write after end', 
+      and the extra requests will time out

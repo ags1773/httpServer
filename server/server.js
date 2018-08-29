@@ -35,7 +35,6 @@ function createServer (port) {
         headersParsed = true
         let str = normalizeHeaders(headerBuf.toString())
         parseReqHeaders(request, str)
-        console.log('Request ==>', request)
         request.socket = socket
       }
       if (headersParsed) {
