@@ -2,23 +2,25 @@ const server = require('../server/server')
 const {staticFileHandler} = require('../server/handlers')
 const path = require('path')
 const fs = require('fs')
+const Item = require('./todoItem')
 
 server.addHandler((req, res, next) => {
   staticFileHandler(req, res, next, path.join(__dirname, 'public'))
 })
 server.createServer(3000)
 
-server.addRoute('GET', '/', (req, res) => {
-  // fetch todos from file, make html, render it
+server.addRoute('GET', '/', (req, res) => res.render('home.html'))
+server.addRoute('GET', '/todo', (req, res) => {
   fs.readFile(path.join(__dirname, '/todos.txt'), (err, data) => {
     if (err) res.setStatus(404).write(err.message).send()
     else {
-      let LIs = '<li>No To-Dos to show</li>'
-      if (data && data.length) {
-        // console.log('DATA >>>>', data.toString().split('\r\n').splice(-1))
-        console.log('DATA >>>>', data.toString().split('\r\n').slice(0, -1).map(e => '<li>' + e + '</li>').join(''))
-        LIs = data.toString().split('\r\n').slice(0, -1).map(e => '<li>' + e + '</li>').join('')
-      }
+      let dataArr = data.length ? JSON.parse(data) : []
+      let LIs = ''
+      if (dataArr.length) {
+        dataArr.forEach(e => {
+          LIs += `<li id="${e.id}">${e.value}</li>`
+        })
+      } else LIs = '---Nothing to show---'
       let content = `<!DOCTYPE html>
       <html lang="en">
       <head>
@@ -29,8 +31,8 @@ server.addRoute('GET', '/', (req, res) => {
         <link rel="stylesheet" href="/style.css">
       </head>
       <body>
-        <form action="/" method="post">
-          <input type="text" placeholder="To-Do">
+        <form action="/todo" method="post">
+          <input type="text" name="todo" placeholder="To-Do" />
           <button type="submit">Add Todo</button>
         </form>
         <div>
@@ -44,12 +46,21 @@ server.addRoute('GET', '/', (req, res) => {
     }
   })
 })
-server.addRoute('POST', '/', (req, res) => {
-  // add todo to file
-  console.log('POST body >>>>', req.body)
-  const todo = req.body.todo + '\r\n'
-  fs.appendFile(path.join(__dirname, 'todos.txt'), todo, (err) => {
+server.addRoute('POST', '/todo', (req, res) => {
+  const todo = req.body.todo
+  const fileSize = fs.statSync(path.join(__dirname, 'todos.txt')).size
+  let buf = Buffer.alloc(fileSize)
+  fs.open(path.join(__dirname, 'todos.txt'), 'r+', (err, fd) => {
     if (err) res.setStatus(500).write(err.message).send()
-    res.setStatus(200).send()
+    else {
+      let len = fs.readSync(fd, buf, 0, fileSize, 0)
+      let todos = len === 0 ? [] : JSON.parse(buf.toString())
+      todos.push(new Item(todo))
+      todos = JSON.stringify(todos)
+      let writeBuf = Buffer.from(todos)
+      fs.writeSync(fd, writeBuf)
+      fs.closeSync(fd)
+      res.redirect('/todo')
+    }
   })
 })

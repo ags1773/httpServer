@@ -93,6 +93,11 @@ class Response {
     }
     return this
   }
+  redirect (loc) {
+    this.setStatus(303)
+    this.headers['Location'] = loc
+    this.send()
+  }
 }
 
 module.exports = Response
