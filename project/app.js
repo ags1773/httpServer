@@ -44,3 +44,7 @@ server.addRoute('GET', '/write', (req, res) => {
 server.addRoute('GET', '/write/html', (req, res) => {
   res.write('<h2>FUA</h2>').setContentType('html')
 })
+
+server.addRoute('GET', '/:id', (req, res) => {
+  res.write('test')
+})

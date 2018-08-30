@@ -6,9 +6,13 @@ const timeout = 5000 // timer after which server closes the socket
 const defaultHandlers = [methodHandler] // these handlers are attached for every request & are executed L to R
 
 const handlers = []
+// const routes = {
+//   GET: {},
+//   POST: {}
+// }
 const routes = {
-  GET: {},
-  POST: {}
+  GET: [],
+  POST: []
 }
 
 function createServer (port) {
@@ -48,9 +52,9 @@ function createServer (port) {
           if (error) closeSocketWithError(socket, 400, error.message)
           else {
             request.body = parsedBody
-            doStuff(request)
+            genResAndRunHandlers(request)
           }
-        } else if (request.method === 'GET') doStuff(request)
+        } else if (request.method === 'GET') genResAndRunHandlers(request)
         else closeSocketWithError(socket, 500, 'Error! something slipped through the cracks...')
       }
     })
@@ -106,7 +110,7 @@ function closeSocketWithError (socket, statusCode, errorMsg = '') {
   }
   socket.end()
 }
-function doStuff (request) {
+function genResAndRunHandlers (request) {
   console.log('@@@ DO STUFF @@@')
   const response = new Response(request)
   console.log('Handlers >>', request.handlers)
@@ -118,22 +122,65 @@ function next (req, res) {
   else console.log('No more handlers to run...')
 }
 function addRoute (method, url, callback) {
-  routes[method][url] = callback
+  // routes[method][url] = callback
+  // routes[method].push({url: callback})
+  routes[method].push([url, callback])
 }
 function addHandler (h) {
   handlers.push(h)
 }
+// OLD:
+// routes obj: {
+//    GET: {
+//        '/': callback,
+//        '/12': callback,
+//        '/:id': callback
+//    }
+// }
+// NEW:
+// routes obj: {
+//    GET: [
+//        ['/', callback]
+//        ['/12', callback]
+//        ['/:id', callback]
+//        ['/:id/abc/:name']
+//    ]
+// }
 function methodHandler (req, res, next) {
   console.log('%%% Running method handler %%%')
-  if (routes[req.method].hasOwnProperty(req.url)) {
-    routes[req.method][req.url](req, res)
-    next(req, res)
-  } else {
-    console.log(`[server] ${req.method} on "${req.url}" route isn't defined`)
-    res.setStatus(404)
-    res.send()
+  let matchedRoutes = routes[req.method].filter(e => {
+    console.log('e[0] =>', e[0])
+    let re = e[0].replace(/:[^/:]+/g, '[^/]+')
+    console.log('RE =>', re)
+    if (e[0].match(re)) return true
+    else return false
+    // if (e.includes(':')) re = /[^/]+/
+    // see if req.url matches with e[0]
+  })
+  if (matchedRoutes && matchedRoutes.length) {
+    console.log('Route matches for request => ', matchedRoutes)
   }
+  next(req, res)
+  // if (routes[req.method].hasOwnProperty(req.url)) {
+  //   routes[req.method][req.url](req, res)
+  //   next(req, res)
+  // } else {
+  //   console.log(`[server] ${req.method} on "${req.url}" route isn't defined`)
+  //   res.setStatus(404)
+  //   res.send()
+  // }
 }
+// function methodHandler (req, res, next) {
+//   console.log('%%% Running method handler %%%')
+//   if (routes[req.method].hasOwnProperty(req.url)) {
+//     routes[req.method][req.url](req, res)
+//     next(req, res)
+//   } else {
+//     console.log(`[server] ${req.method} on "${req.url}" route isn't defined`)
+//     res.setStatus(404)
+//     res.send()
+//   }
+// }
 
 module.exports = {
   createServer,
