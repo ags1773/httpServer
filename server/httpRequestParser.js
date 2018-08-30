@@ -18,10 +18,12 @@ function parseReqHeaders (reqObj, headerStr) {
 function parseReqBody (headers, body) {
   try {
     if ('Content-Type' in headers) {
-      if (headers['Content-Type'] === 'application/json') {
+      // if (headers['Content-Type'] === 'application/json') {
+      if (headers['Content-Type'].includes('application/json')) {
         console.log('JSON recieved')
         return [JSON.parse(body), false]
-      } else if (headers['Content-Type'] === 'application/x-www-form-urlencoded') {
+      // } else if (headers['Content-Type'] === 'application/x-www-form-urlencoded') {
+      } else if (headers['Content-Type'].includes('application/x-www-form-urlencoded')) {
         console.log('URL encoded form data recieved')
         return [querystring.parse(body), false]
       } else console.log('Content-Type =>', headers['Content-Type'])

@@ -1,46 +1,53 @@
 const server = require('../server/server')
 const {staticFileHandler} = require('../server/handlers')
 const path = require('path')
+const fs = require('fs')
 
 server.addHandler((req, res, next) => {
   staticFileHandler(req, res, next, path.join(__dirname, 'public'))
 })
-
-server.addHandler((req, res, next) => {
-  console.log('>>>> TEST HANDLER 123 <<<<')
-  next(req, res)
-})
-
 server.createServer(3000)
+
 server.addRoute('GET', '/', (req, res) => {
-  res.render('home.html')
+  // fetch todos from file, make html, render it
+  fs.readFile(path.join(__dirname, '/todos.txt'), (err, data) => {
+    if (err) res.setStatus(404).write(err.message).send()
+    else {
+      let content = 'No To-Dos to show'
+      if (data) {
+        let LIs = data.toString().split('\r\n').map(e => '<li>' + e + '</li>').join('')
+        content = `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="X-UA-Compatible" content="ie=edge">
+          <title>To Do List</title>
+          <link rel="stylesheet" href="/style.css">
+        </head>
+        <body>
+          <form action="/" method="post">
+            <input type="text" placeholder="To-Do">
+            <button type="submit">Add Todo</button>
+          </form>
+          <div>
+            My To-Dos:
+            <ul>` + LIs + `</ul>
+            </div>
+            <script src="/script.js"></script>
+          </body>
+          </html>`
+      }
+      res.write(content).setStatus(200).setContentType('html').send()
+    }
+  })
 })
-server.addRoute('GET', '/test', (req, res) => {
-  res.render('test.html')
-  // res.render('/jjjj')
-})
-server.addRoute('GET', '/json', (req, res) => {
-  res.setStatus(418).json([1, 2, 3, 4, 5]).send()
-  // res.json([1, 2, 3, 4, 5]).send()
-  // res.json()
-})
-server.addRoute('POST', '/post', (req, res) => {
-  console.log('body >>>', req.body)
-  console.log(`STATUS >> ${res.statusCode}`)
-  res.setStatus(200).send()
-})
-server.addRoute('GET', '/12', (req, res) => {
-  res.setContentType('jpg')
-  res.setStatus(305)
-  res.json({
-    message: 'Hello',
-    status: 'Wait',
-    code: 235
-  }).send()
-})
-server.addRoute('GET', '/write', (req, res) => {
-  res.write('Bacon ipsum dolor amet ')
-})
-server.addRoute('GET', '/write/html', (req, res) => {
-  res.write('<h2>FUA</h2>').setContentType('html')
+server.addRoute('POST', '/', (req, res) => {
+  // add todo to file
+  console.log('POST body >>>>', req.body)
+  const todo = req.body.todo + '\r\n'
+  fs.appendFile(path.join(__dirname, 'todos.txt'), todo, (err) => {
+    if (err) res.setStatus(500).write(err.message).send()
+    res.setStatus(200).send()
+  })
 })
