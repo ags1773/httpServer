@@ -18,7 +18,10 @@ server.addRoute('GET', '/todo', (req, res) => {
       let LIs = ''
       if (dataArr.length) {
         dataArr.forEach(e => {
-          LIs += `<li id="${e.id}">${e.value}</li>`
+          LIs += `<li id="${e.id}">
+            <button class="btnDel">X</button>
+            ${e.value}
+          </li>`
         })
       } else LIs = '---Nothing to show---'
       let content = `<!DOCTYPE html>
@@ -30,7 +33,7 @@ server.addRoute('GET', '/todo', (req, res) => {
         <title>To Do List</title>
         <link rel="stylesheet" href="/style.css">
       </head>
-      <body>
+      <body id="todo">
         <form action="/todo" method="post">
           <input type="text" name="todo" placeholder="To-Do" />
           <button type="submit">Add Todo</button>
@@ -39,6 +42,7 @@ server.addRoute('GET', '/todo', (req, res) => {
           My To-Dos:
           <ul>` + LIs + `</ul>
           </div>
+          <script src="/xhr.js"></script>
           <script src="/script.js"></script>
         </body>
         </html>`
@@ -58,6 +62,32 @@ server.addRoute('POST', '/todo', (req, res) => {
       todos.push(new Item(todo))
       todos = JSON.stringify(todos)
       let writeBuf = Buffer.from(todos)
+      fs.writeSync(fd, writeBuf)
+      fs.closeSync(fd)
+      res.redirect('/todo')
+    }
+  })
+})
+server.addRoute('POST', '/todo/delete', (req, res) => {
+  console.log('Hit POST /todo/delete')
+  const id = req.body
+  const fileSize = fs.statSync(path.join(__dirname, 'todos.txt')).size
+  let buf = Buffer.alloc(fileSize)
+  // res.redirect('/todo')
+  fs.open(path.join(__dirname, 'todos.txt'), 'r+', (err, fd) => {
+    if (err) res.setStatus(500).write(err.message).send()
+    else {
+      fs.readSync(fd, buf, 0, fileSize, 0)
+      let todos = JSON.parse(buf.toString())
+      for (const [i, todo] of todos.entries()) { // todos.entries() returns a new Array Iterator object that contains the key/value pairs for each index in the array
+        if (todo.id === Number(id)) {
+          todos.splice(i, 1)
+          break
+        }
+      }
+      todos = JSON.stringify(todos)
+      let writeBuf = Buffer.from(todos)
+      fs.truncateSync(fd)
       fs.writeSync(fd, writeBuf)
       fs.closeSync(fd)
       res.redirect('/todo')

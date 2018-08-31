@@ -1,30 +1,15 @@
-// function sendData (data, action, method, callback) { // make XHR using JSON
-//   let XHR = new XMLHttpRequest()
+const pageId = document.querySelector('body').id
 
-//   XHR.open(method, action, true)
-//   XHR.setRequestHeader('Content-Type', 'application/json;charset=UTF-8')
-//   XHR.send(JSON.stringify(data))
+if (pageId === 'todo') {
+  const X = document.querySelectorAll('.btnDel')
 
-//   XHR.addEventListener('load', function (e) {
-//     callback(null, e.target.status)
-//   })
-
-//   XHR.addEventListener('error', function () {
-//     let err = new Error('Error sending data to server')
-//     callback(err)
-//   })
-// }
-
-// document.querySelector('button[type="submit"]').addEventListener('click', (e) => {
-//   e.preventDefault()
-//   let data = {todo: document.querySelector('input').value}
-//   if (data) {
-//     sendData(data, '/', 'POST', (err, status) => {
-//       if (err) console.log(err)
-//       else {
-//         document.querySelector('input').value = ''
-//         console.log('Data sent via XHR')
-//       }
-//     })
-//   }
-// })
+  X.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      sendData(e.target.parentElement.id, '/todo/delete', 'POST', (err, status) => {
+        if (err) console.log(err)
+        else console.log('Delete request sent via XHR')
+        window.location.href = '/todo' // I'm sending 302 redirect request, but xhr has some issue because of which it doesn't redirect. Therefore using this to redirect
+      })
+    })
+  })
+}

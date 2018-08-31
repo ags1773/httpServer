@@ -1,3 +1,7 @@
 body {
   background-color: powderblue
 }
+
+#todo .btnDel {
+  color: red
+}
