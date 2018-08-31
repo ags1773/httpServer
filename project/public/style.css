@@ -5,3 +5,25 @@ body {
 #todo .btnDel {
   color: red
 }
+#home {
+  background-image: url('pic.jpg');
+  background-repeat: repeat;
+}
+#todoWrapper {
+  margin: 5vh 10vw
+}
+#home a{
+  display: inline-block;
+  text-decoration: none;
+  padding: 2em;
+  margin: 10px;
+  border: 1px solid white;
+  color: white;
+}
+#wrapper {
+  margin: 30vh 35vw;
+}
+#home a:hover{
+  background-color: aquamarine;
+  color: black
+}

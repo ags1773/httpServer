@@ -48,9 +48,9 @@ function createServer (port) {
           if (error) closeSocketWithError(socket, 400, error.message)
           else {
             request.body = parsedBody
-            doStuff(request)
+            createResponseAndRunHandlers(request)
           }
-        } else if (request.method === 'GET') doStuff(request)
+        } else if (request.method === 'GET') createResponseAndRunHandlers(request)
         else closeSocketWithError(socket, 500, 'Error! something slipped through the cracks...')
       }
     })
@@ -106,8 +106,7 @@ function closeSocketWithError (socket, statusCode, errorMsg = '') {
   }
   socket.end()
 }
-function doStuff (request) {
-  console.log('@@@ DO STUFF @@@')
+function createResponseAndRunHandlers (request) {
   const response = new Response(request)
   console.log('Handlers >>', request.handlers)
   next(request, response)
